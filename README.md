@@ -7,6 +7,10 @@ all images and videos, and like/unlike them. The app consumes a RESTful API to p
 
 It's a typical React App that you can start through:
 
+## API
+
+The app consumes a RESTful API to perform operations. The API documentation can be found [here](https://github.com/aabaza97/MSWE-Assignment).
+
 ### `npm start`
 
 Runs the app in the development mode.\
@@ -20,3 +24,10 @@ You may also see any lint errors in the console.
 ![Login view](readme/login.png)
 
 ![home view](readme/home.png)
+
+## Technologies Used
+
+-   React
+-   Axios
+-   React Router
+-   Tailwind CSS
