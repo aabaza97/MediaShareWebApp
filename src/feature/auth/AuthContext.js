@@ -14,9 +14,7 @@ export const AuthProvider = ({ children }) => {
 			try {
 				// Check if user is logged in using AuthService
 				if (AuthService.isLoggedIn()) {
-					// You might want to fetch user details here if needed
-					// For now, we'll just set a logged in state
-					setUser({});
+					setUser(AuthService.getUser());
 				}
 			} catch (error) {
 				console.error('Authentication check failed', error);
@@ -31,7 +29,6 @@ export const AuthProvider = ({ children }) => {
 	const login = async (email, password) => {
 		try {
 			const userData = await AuthService.login(email, password);
-			console.log('User data', userData);
 			setUser(userData);
 			return userData;
 		} catch (error) {
@@ -76,10 +73,22 @@ export const AuthProvider = ({ children }) => {
 			setUser(null);
 		} catch (error) {
 			console.error('Logout failed', error);
+			throw error;
 		}
 	};
 
-	const isAuthenticated = () => !!user;
+	const isAuthenticated = () => {
+		try {
+			console.info(
+				'Checking authentication status',
+				AuthService.isLoggedIn()
+			);
+			return AuthService.isLoggedIn();
+		} catch (error) {
+			console.error('Error checking authentication status', error);
+			return false;
+		}
+	};
 
 	return (
 		<AuthContext.Provider

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,8 +6,14 @@ const Signup = () => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
-	const { signup } = useAuth();
+	const { signup, user } = useAuth();
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (user) {
+			navigate('/home');
+		}
+	});
 
 	const handleSubmit = (e) => {
 		e.preventDefault();

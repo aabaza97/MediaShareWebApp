@@ -1,4 +1,3 @@
-import React from 'react';
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -16,7 +15,7 @@ const PrivateRoute = ({ children }) => {
 	return user ? children : <Navigate to='/login' replace />;
 };
 
-function App() {
+const App = () => {
 	return (
 		<AuthProvider>
 			<Router>
@@ -39,6 +38,6 @@ function App() {
 			</Router>
 		</AuthProvider>
 	);
-}
+};
 
 export default App;

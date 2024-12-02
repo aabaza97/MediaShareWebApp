@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // Mock post data (in a real app, this would come from a backend)
 const initialPosts = [
 	{
 		id: 1,
 		user: 'John Doe',
-		media: 'https://picsum.photos/600/400',
+		media: 'https://picsum.photos/1024/768',
 		description: 'Beautiful day out!',
 		likes: 42,
 		mediaType: 'image',
@@ -87,6 +88,23 @@ const PostCard = ({ post }) => {
 const Home = () => {
 	const { user, logout } = useAuth();
 	const [posts] = useState(initialPosts);
+	const navigate = useNavigate();
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+
+		try {
+			// Logout
+			await logout();
+			navigate('/login');
+		} catch (err) {
+			// Handle logout errors
+
+			console.error('Logout error:', err);
+		} finally {
+			navigate('/login');
+		}
+	};
 
 	return (
 		<div className='min-h-screen bg-gray-100'>
@@ -106,7 +124,7 @@ const Home = () => {
 								{user?.email}
 							</span>
 							<button
-								onClick={logout}
+								onClick={handleSubmit}
 								className='bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600'>
 								Logout
 							</button>

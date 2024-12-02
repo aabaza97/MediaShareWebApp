@@ -16,6 +16,7 @@ const StorageKey = {
 	AccessToken: 'accessToken',
 	RefreshToken: 'refreshToken',
 	LastRefresh: 'lastTokenRefresh',
+	USER: 'user',
 };
 
 // Create an axios instance with base configuration
@@ -25,20 +26,6 @@ const apiClient = axios.create({
 		'Content-Type': 'application/json',
 	},
 });
-
-// Interceptor to handle token injection
-apiClient.interceptors.request.use(
-	(config) => {
-		const token = localStorage.getItem('accessToken');
-		if (token) {
-			config.headers['Authorization'] = `Bearer ${token}`;
-		}
-		return config;
-	},
-	(error) => {
-		return Promise.reject(error);
-	}
-);
 
 class AuthService {
 	// 1. Send Email Verification
@@ -74,7 +61,10 @@ class AuthService {
 			// Store tokens
 			this.storeTokens(response.data);
 
-			return response.data;
+			// Update user details
+			this.updateUser(response.data);
+
+			return this.getUser();
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -88,7 +78,6 @@ class AuthService {
 				password,
 			});
 
-			console.log('Login response', response);
 			if (response.status !== 200) {
 				throw new Error('Login failed');
 			}
@@ -96,7 +85,10 @@ class AuthService {
 			// Store tokens
 			this.storeTokens(response.data);
 
-			return response.data;
+			// Update user details
+			this.updateUser(response.data);
+
+			return this.getUser();
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -125,7 +117,7 @@ class AuthService {
 			return this.updateAccessToken(response.data);
 		} catch (error) {
 			// If refresh fails, logout user
-			this.logout();
+			console.error('Refresh token error:', error);
 			throw error;
 		}
 	}
@@ -133,8 +125,8 @@ class AuthService {
 	// 5. Logout
 	async logout() {
 		try {
-			// Logout on server
-			const accessToken =
+			// Get access token or refresh it if needed
+			let accessToken =
 				this.getAccessToken() || (await this.refreshToken());
 
 			if (!accessToken) {
@@ -176,6 +168,7 @@ class AuthService {
 			switch (status) {
 				case 401:
 					// Unauthorized
+					// this.clearTokens();
 					throw new Error('Unauthorized');
 				case 403:
 					// Forbidden
@@ -210,7 +203,7 @@ class AuthService {
 
 	// Utility function to check if user is logged in
 	isLoggedIn() {
-		return localStorage.getItem(StorageKey.RefreshToken) !== null;
+		return this.getRefreshToken() !== null;
 	}
 
 	// Utility function to get access token
@@ -219,7 +212,7 @@ class AuthService {
 		const accessToken = localStorage.getItem(StorageKey.AccessToken);
 		const lastTokenRefresh = localStorage.getItem(StorageKey.LastRefresh);
 		if (!accessToken || !lastTokenRefresh) return null;
-		if (Date.now() - lastTokenRefresh > 3 * 60 * 1000) {
+		if (Date.now() - lastTokenRefresh > 1 * 60 * 1000) {
 			// 3 minutes
 			return null;
 		}
@@ -232,8 +225,9 @@ class AuthService {
 	}
 
 	// Utility function to handle token storage
-	storeTokens(data) {
+	storeTokens({ data }) {
 		if (data.access_token && data.refresh_token) {
+			console.log('Storing tokens:', data);
 			localStorage.setItem(StorageKey.AccessToken, data.access_token);
 			localStorage.setItem(StorageKey.RefreshToken, data.refresh_token);
 			localStorage.setItem(StorageKey.LastRefresh, Date.now());
@@ -241,7 +235,7 @@ class AuthService {
 	}
 
 	// Utility function to update access token
-	updateAccessToken(data) {
+	updateAccessToken({ data }) {
 		if (data.access_token) {
 			localStorage.setItem(StorageKey.AccessToken, data.access_token);
 			localStorage.setItem(StorageKey.LastRefresh, Date.now());
@@ -255,6 +249,24 @@ class AuthService {
 		localStorage.removeItem(StorageKey.AccessToken);
 		localStorage.removeItem(StorageKey.RefreshToken);
 		localStorage.removeItem(StorageKey.LastRefresh);
+
+		// Clear user details
+		localStorage.removeItem(StorageKey.USER);
+	}
+
+	// Utility function to get user details
+	getUser() {
+		const user = localStorage.getItem(StorageKey.USER);
+		return user ? JSON.parse(user) : null;
+	}
+
+	// Utility function to update user details
+	updateUser({ data }) {
+		const { id, email, first_name, last_name } = data;
+		localStorage.setItem(
+			StorageKey.USER,
+			JSON.stringify({ id, email, first_name, last_name })
+		);
 	}
 }
 

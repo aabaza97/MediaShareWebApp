@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,8 +7,14 @@ const Login = () => {
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
-	const { login, isAuthenticated } = useAuth();
+	const { login, user } = useAuth();
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (user) {
+			navigate('/home');
+		}
+	});
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -16,12 +22,6 @@ const Login = () => {
 		setIsLoading(true);
 
 		try {
-			if (isAuthenticated()) {
-				console.log('User is already logged in');
-				navigate('/home');
-				return;
-			}
-
 			// Use the new login method from AuthService
 			await login(email, password);
 			navigate('/home');
@@ -91,6 +91,14 @@ const Login = () => {
 							disabled={isLoading}>
 							{isLoading ? 'Signing in...' : 'Sign in'}
 						</button>
+					</div>
+
+					<div className='text-sm text-center'>
+						<a
+							href='/signup'
+							className='font-medium text-indigo-600 hover:text-indigo-500'>
+							Don't have an account yet? Sign up
+						</a>
 					</div>
 				</form>
 			</div>
