@@ -36,6 +36,12 @@ const PostCard = ({ post }) => {
 		}
 	};
 
+	const handleShare = (e) => {
+		e.preventDefault();
+		navigator.clipboard.writeText(post.media);
+		alert('Copied link to clipboard!');
+	};
+
 	return (
 		<div className='bg-white rounded-lg overflow-hidden mb-4'>
 			{/* Media Player */}
@@ -77,7 +83,29 @@ const PostCard = ({ post }) => {
 								d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
 							/>
 						</svg>
-						{likes} Likes
+						Like
+					</button>
+
+					{/* share button */}
+					<button
+						onClick={handleShare}
+						className={`flex items-center ml-4 ${
+							liked ? 'text-red-500' : 'text-gray-500'
+						}`}>
+						<svg
+							xmlns='http://www.w3.org/2000/svg'
+							className='h-6 w-6 mr-2'
+							fill={liked ? 'currentColor' : 'none'}
+							viewBox='0 0 24 24'
+							stroke='currentColor'>
+							<path
+								d='M20 13V17.5C20 20.5577 16 20.5 12 20.5C8 20.5 4 20.5577 4 17.5V13M12 3L12 15M12 3L16 7M12 3L8 7'
+								stroke-width='1.5'
+								stroke-linecap='round'
+								stroke-linejoin='round'
+							/>
+						</svg>
+						Share
 					</button>
 				</div>
 			</div>
