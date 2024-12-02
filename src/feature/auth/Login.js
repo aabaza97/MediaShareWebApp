@@ -5,15 +5,33 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const { login } = useAuth();
+	const [error, setError] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+	const { login, isAuthenticated } = useAuth();
 	const navigate = useNavigate();
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
-		// Simulate login (in a real app, this would involve backend validation)
-		const userData = { email };
-		login(userData);
-		navigate('/home');
+		setError('');
+		setIsLoading(true);
+
+		try {
+			if (isAuthenticated()) {
+				console.log('User is already logged in');
+				navigate('/home');
+				return;
+			}
+
+			// Use the new login method from AuthService
+			await login(email, password);
+			navigate('/home');
+		} catch (err) {
+			// Handle login errors
+			setError(err.message || 'Login failed. Please try again.');
+			console.error('Login error:', err);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -24,6 +42,9 @@ const Login = () => {
 						Sign in to your account
 					</h2>
 				</div>
+				{error && (
+					<div className='text-red-500 text-center mb-4'>{error}</div>
+				)}
 				<form className='mt-8 space-y-6' onSubmit={handleSubmit}>
 					<input type='hidden' name='remember' defaultValue='true' />
 					<div className='rounded-md shadow-sm -space-y-px'>
@@ -41,6 +62,7 @@ const Login = () => {
 								placeholder='Email address'
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
+								disabled={isLoading}
 							/>
 						</div>
 						<div>
@@ -57,6 +79,7 @@ const Login = () => {
 								placeholder='Password'
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
+								disabled={isLoading}
 							/>
 						</div>
 					</div>
@@ -64,8 +87,9 @@ const Login = () => {
 					<div>
 						<button
 							type='submit'
-							className='group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'>
-							Sign in
+							className='group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+							disabled={isLoading}>
+							{isLoading ? 'Signing in...' : 'Sign in'}
 						</button>
 					</div>
 				</form>
