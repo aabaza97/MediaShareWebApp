@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# A brief app intro
 
 A React frontend application for a media sharing platform allows users to upload images or videos, view a list of
 all images and videos, and like/unlike them. The app consumes a RESTful API to perform these operations.
