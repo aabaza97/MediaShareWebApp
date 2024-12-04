@@ -1,26 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import MediaService from './MediaService';
 
-// Mock post data (in a real app, this would come from a backend)
-const initialPosts = [
-	{
-		id: 1,
-		user: 'John Doe',
-		media: 'https://picsum.photos/1024/768',
-		description: 'Beautiful day out!',
-		likes: 42,
-		mediaType: 'image',
-	},
-	{
-		id: 2,
-		user: 'Jane Smith',
-		media: 'https://www.w3schools.com/html/mov_bbb.mp4',
-		description: 'Check out this cool video!',
-		likes: 23,
-		mediaType: 'video',
-	},
-];
+const initialPosts = [];
 
 const PostCard = ({ post }) => {
 	const [likes, setLikes] = useState(post.likes);
@@ -45,15 +28,15 @@ const PostCard = ({ post }) => {
 	return (
 		<div className='bg-white rounded-lg overflow-hidden mb-4'>
 			{/* Media Player */}
-			{post.mediaType === 'image' ? (
+			{post.type === 'image' ? (
 				<img
-					src={post.media}
+					src={post.download_url}
 					alt='Post media'
-					className='w-full h-96 object-cover'
+					className='w-full h-96 object-contain'
 				/>
 			) : (
 				<video
-					src={post.media}
+					src={post.download_url}
 					controls
 					className='w-full h-96 object-cover'
 				/>
@@ -61,7 +44,7 @@ const PostCard = ({ post }) => {
 
 			{/* Post Description */}
 			<div className='p-4'>
-				<p className='text-gray-800 mb-2'>{post.description}</p>
+				<p className='text-gray-800 mb-2'>{post.type}</p>
 
 				{/* Like Button */}
 				<div className='flex items-center'>
@@ -115,8 +98,31 @@ const PostCard = ({ post }) => {
 
 const Home = () => {
 	const { user, logout } = useAuth();
-	const [posts] = useState(initialPosts);
+	const [posts, setPosts] = useState(initialPosts);
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!user) {
+			console.log('going to login from home');
+			navigate('/login');
+			return;
+		}
+
+		const fetchData = async () => {
+			try {
+				// Fetch all posts
+				const { media } = (await MediaService.fetchAll()).data;
+				console.log('Posts:', media);
+
+				setPosts(media);
+			} catch (err) {
+				// Handle fetch errors
+				console.error('Fetch error:', err);
+			}
+		};
+
+		fetchData();
+	}, [user, navigate]);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -127,7 +133,6 @@ const Home = () => {
 			navigate('/login');
 		} catch (err) {
 			// Handle logout errors
-
 			console.error('Logout error:', err);
 		} finally {
 			navigate('/login');

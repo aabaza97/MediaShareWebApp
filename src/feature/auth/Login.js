@@ -12,6 +12,7 @@ const Login = () => {
 
 	useEffect(() => {
 		if (user) {
+			console.log('going to home from login');
 			navigate('/home');
 		}
 	});

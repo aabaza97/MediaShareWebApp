@@ -17,6 +17,7 @@ const StorageKey = {
 	RefreshToken: 'refreshToken',
 	LastRefresh: 'lastTokenRefresh',
 	USER: 'user',
+	TTL: 'ttl',
 };
 
 // Create an axios instance with base configuration
@@ -118,6 +119,12 @@ class AuthService {
 		} catch (error) {
 			// If refresh fails, logout user
 			console.error('Refresh token error:', error);
+			if (
+				error.response.data.error.message ===
+				'msg_refresh_token_cache_not_found'
+			) {
+				this.clearTokens();
+			}
 			throw error;
 		}
 	}
@@ -203,7 +210,9 @@ class AuthService {
 
 	// Utility function to check if user is logged in
 	isLoggedIn() {
-		return this.getRefreshToken() !== null;
+		return (
+			this.getRefreshToken() !== null && (this.getUser() !== null || {})
+		);
 	}
 
 	// Utility function to get access token
@@ -211,8 +220,10 @@ class AuthService {
 		// return access token from local storage if exists && not expired
 		const accessToken = localStorage.getItem(StorageKey.AccessToken);
 		const lastTokenRefresh = localStorage.getItem(StorageKey.LastRefresh);
+		const ttl = localStorage.getItem(StorageKey.TTL);
+		console.log('TTL:', ttl);
 		if (!accessToken || !lastTokenRefresh) return null;
-		if (Date.now() - lastTokenRefresh > 1 * 60 * 1000) {
+		if (Date.now() - lastTokenRefresh > ttl) {
 			// 3 minutes
 			return null;
 		}
@@ -231,6 +242,10 @@ class AuthService {
 			localStorage.setItem(StorageKey.AccessToken, data.access_token);
 			localStorage.setItem(StorageKey.RefreshToken, data.refresh_token);
 			localStorage.setItem(StorageKey.LastRefresh, Date.now());
+			localStorage.setItem(
+				StorageKey.TTL,
+				this.ttlToMilliseconds(data.ttl)
+			);
 		}
 	}
 
@@ -239,6 +254,10 @@ class AuthService {
 		if (data.access_token) {
 			localStorage.setItem(StorageKey.AccessToken, data.access_token);
 			localStorage.setItem(StorageKey.LastRefresh, Date.now());
+			localStorage.setItem(
+				StorageKey.TTL,
+				this.ttlToMilliseconds(data.ttl)
+			);
 		}
 
 		return data.access_token;
@@ -249,7 +268,7 @@ class AuthService {
 		localStorage.removeItem(StorageKey.AccessToken);
 		localStorage.removeItem(StorageKey.RefreshToken);
 		localStorage.removeItem(StorageKey.LastRefresh);
-
+		localStorage.removeItem(StorageKey.TTL);
 		// Clear user details
 		localStorage.removeItem(StorageKey.USER);
 	}
@@ -267,6 +286,34 @@ class AuthService {
 			StorageKey.USER,
 			JSON.stringify({ id, email, first_name, last_name })
 		);
+	}
+
+	ttlToMilliseconds(timeString) {
+		// Regular expression to match number and unit
+		const regex = /^(\d+)([smhd])$/;
+		const match = timeString.match(regex);
+
+		if (!match) {
+			throw new Error(
+				'Invalid time format. Use format like "10m", "5s", "2h", "1d"'
+			);
+		}
+
+		const value = parseInt(match[1]);
+		const unit = match[2];
+
+		switch (unit) {
+			case 's': // seconds
+				return value * 1000;
+			case 'm': // minutes
+				return value * 60 * 1000;
+			case 'h': // hours
+				return value * 60 * 60 * 1000;
+			case 'd': // days
+				return value * 24 * 60 * 60 * 1000;
+			default:
+				throw new Error('Invalid time unit');
+		}
 	}
 }
 
